@@ -38,6 +38,15 @@ supported_models = {
     "FluxSchnell": FluxSchnell_TRT,
 }
 
+supported_quantization_models: dict[TRTModelUtil] = {
+    "SD15": SD15_TRT,
+    "SD20": SD20_TRT,
+    "SDXL": SDXL_TRT,
+    "SD3": SD3_TRT,
+    "Flux": Flux_TRT,
+    "FluxSchnell": FluxSchnell_TRT,
+}
+
 unsupported_models = [
     "SV3D_u",
     "SV3D_p",

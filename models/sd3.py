@@ -1,6 +1,8 @@
 import torch
 
 from .baseline import TRTModelUtil
+from .diffusion_pipe import DefaultT2IPipe
+from ..quantization import FP8_FP16_DEFAULT_CONFIG
 
 
 class SD3_TRT(TRTModelUtil):
@@ -66,3 +68,40 @@ class SD3_TRT(TRTModelUtil):
             use_control=True,
             **kwargs,
         )
+
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed,
+            batch_size=1,
+            width=1024,
+            height=1024,
+            cfg=5.5,
+            sampler_name="euler",
+            scheduler="sgm_uniform",
+            denoise=1.0,
+            device="cuda",
+            *args,
+            **kwargs,
+    ):
+        return DefaultT2IPipe(
+            model,
+            clip,
+            batch_size,
+            width,
+            height,
+            seed,
+            cfg,
+            sampler_name,
+            scheduler,
+            denoise,
+            device,
+            is_sd3=True,
+        )
+
+    def get_qconfig(self, precision: str, **kwargs) -> tuple[dict, dict]:
+        if precision == "fp8":
+            return (FP8_FP16_DEFAULT_CONFIG, {"quant_level": 3.0})
+        elif precision == "int8":
+            return ({}, {"quant_level": 2.5})

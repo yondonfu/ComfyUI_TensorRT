@@ -7,10 +7,20 @@ import comfy
 import folder_paths
 import numpy as np
 import onnx
+import onnx_graphsurgeon as gs
 import torch
+from modelopt.torch.quantization.nn import SequentialQuantizer, TensorQuantizer
 from onnx import numpy_helper
 from onnx.external_data_helper import _get_all_tensors, ExternalDataInfo
+from onnxmltools.utils.float16_converter import convert_float_to_float16
 
+from .fp8_onnx_graphsurgeon import (
+    cast_fp8_mha_io,
+    cast_resize_io,
+    convert_fp16_io,
+    convert_zp_fp8,
+    flux_convert_rope_weight_type,
+)
 from ..models import detect_version_from_model, get_helper_from_model
 
 
@@ -27,6 +37,29 @@ def _get_onnx_external_data_tensors(model: onnx.ModelProto) -> List[str]:
            and tensor.data_location == onnx.TensorProto.EXTERNAL
     ]
     return model_tensors_ext
+
+
+def set_onnx_export_attr(model, dtype):
+    for name, module in model.named_modules():
+        if isinstance(module, (TensorQuantizer, SequentialQuantizer)):
+            if any(
+                    q_tag in name
+                    for q_tag in [
+                        "q_bmm_quantizer",
+                        "k_bmm_quantizer",
+                        "v_bmm_quantizer",
+                        "softmax_quantizer",
+                        "bmm2_output_quantizer",
+                    ]
+            ):
+                module._trt_high_precision_dtype = dtype
+        elif isinstance(module, torch.nn.Linear):
+            module.input_quantizer._trt_high_precision_dtype = dtype
+            module.input_quantizer._onnx_quantizer_type = "dynamic"
+            module.weight_quantizer._onnx_quantizer_type = "static"
+        else:
+            assert not hasattr(module, "input_quantizer")
+            assert not hasattr(module, "weight_quantizer")
 
 
 def get_sample_input(input_shapes: dict, dtype: torch.dtype, device: torch.device):
@@ -171,6 +204,8 @@ def export_onnx(
         width: int = 512,
         num_video_frames: int = 14,
         context_multiplier: int = 1,
+        fp8: bool = False,
+        quant_level: float = 0.0,
 ):
     model_version = detect_version_from_model(model)
     model_helper = get_helper_from_model(model)
@@ -225,6 +260,23 @@ def export_onnx(
     if tensors_paths:
         for tensor in tensors_paths:
             os.remove(os.path.join(onnx_temp, tensor))
+
+    if fp8:
+        if model_version not in ("Flux", "FluxSchnell"):
+            graph = gs.import_onnx(onnx_model)
+            graph.cleanup().toposort()
+            convert_fp16_io(graph)
+            onnx_model = gs.export_onnx(graph)
+            onnx_model = convert_zp_fp8(onnx_model)
+            onnx_model = convert_float_to_float16(
+                onnx_model, keep_io_types=True, disable_shape_infer=True
+            )
+            graph = gs.import_onnx(onnx_model)
+            cast_resize_io(graph)
+            cast_fp8_mha_io(graph)
+            onnx_model = gs.export_onnx(graph.cleanup())
+        else:
+            flux_convert_rope_weight_type(onnx_model)
 
     onnx.save(
         onnx_model,

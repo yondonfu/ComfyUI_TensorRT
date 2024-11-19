@@ -16,6 +16,8 @@ from comfy.supported_models import (
 )
 
 from .baseline import TRTModelUtil
+from .diffusion_pipe import DefaultT2IPipe
+from ..quantization import FP8_FP16_DEFAULT_CONFIG, FP8_FP32_DEFAULT_CONFIG
 
 
 class UNetTRT(TRTModelUtil):
@@ -118,6 +120,12 @@ class UNetTRT(TRTModelUtil):
     def get_dtype(self):
         return torch.float16
 
+    def get_qconfig(self, precision: str, **kwargs) -> tuple[dict, dict]:
+        if precision == "fp8":
+            return (FP8_FP16_DEFAULT_CONFIG, {"quant_level": 3.0})
+        elif precision == "int8":
+            return ({}, {"quant_level": 2.5})
+
 
 class SD15_TRT(UNetTRT):
     def __init__(
@@ -144,6 +152,36 @@ class SD15_TRT(UNetTRT):
     def from_model(cls, model, **kwargs):
         return super(SD15_TRT, cls).from_model(model, use_control=True)
 
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed,
+            batch_size=1,
+            width=512,
+            height=512,
+            cfg=8.0,
+            sampler_name="euler",
+            scheduler="normal",
+            denoise=1.0,
+            device="cuda",
+            *args,
+            **kwargs,
+    ):
+        return DefaultT2IPipe(
+            model,
+            clip,
+            batch_size,
+            width,
+            height,
+            seed,
+            cfg,
+            sampler_name,
+            scheduler,
+            denoise,
+            device,
+        )
+
 
 class SD20_TRT(UNetTRT):
     def __init__(
@@ -169,6 +207,42 @@ class SD20_TRT(UNetTRT):
     @classmethod
     def from_model(cls, model, **kwargs):
         return super(SD20_TRT, cls).from_model(model, use_control=True)
+
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed,
+            batch_size=1,
+            width=768,
+            height=768,
+            cfg=8.0,
+            sampler_name="euler",
+            scheduler="normal",
+            denoise=1.0,
+            device="cuda",
+            *args,
+            **kwargs,
+    ):
+        return DefaultT2IPipe(
+            model,
+            clip,
+            batch_size,
+            width,
+            height,
+            seed,
+            cfg,
+            sampler_name,
+            scheduler,
+            denoise,
+            device,
+        )
+
+    def get_qconfig(self, precision: str, **kwargs) -> tuple[dict, dict]:
+        if precision == "fp8":
+            return (FP8_FP32_DEFAULT_CONFIG, {"quant_level": 3.0})
+        elif precision == "int8":
+            return ({}, {"quant_level": 2.5, "collect_method": "global_min"})
 
 
 class SD21UnclipL_TRT(UNetTRT):
@@ -261,6 +335,36 @@ class SDXL_TRT(UNetTRT):
     @classmethod
     def from_model(cls, model, **kwargs):
         return super(SDXL_TRT, cls).from_model(model, use_control=True)
+
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed,
+            batch_size=1,
+            width=1024,
+            height=1024,
+            cfg=8.0,
+            sampler_name="euler",
+            scheduler="normal",
+            denoise=1.0,
+            device="cuda",
+            *args,
+            **kwargs,
+    ):
+        return DefaultT2IPipe(
+            model,
+            clip,
+            batch_size,
+            width,
+            height,
+            seed,
+            cfg,
+            sampler_name,
+            scheduler,
+            denoise,
+            device,
+        )
 
 
 class SSD1B_TRT(UNetTRT):

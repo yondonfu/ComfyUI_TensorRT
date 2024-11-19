@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 
@@ -96,6 +98,27 @@ class TRTModelUtil:
 
     def get_control(self, *args, **kwargs) -> dict:
         raise NotImplementedError
+
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed: int,
+            batch_size: int,
+            width: Optional[int],
+            height: Optional[int],
+            cfg: Optional[float],
+            sampler_name: Optional[str],
+            scheduler: Optional[str],
+            denoise: Optional[float],
+            device: Optional[torch.device],
+            *args,
+            **kwargs,
+    ):
+        raise NotImplementedError
+
+    def get_qconfig(self, precision: str, **kwargs) -> tuple[dict, dict]:
+        pass
 
     @classmethod
     def from_model(cls, model, **kwargs):

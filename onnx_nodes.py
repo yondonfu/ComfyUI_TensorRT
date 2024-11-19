@@ -42,6 +42,42 @@ class ONNXExport:
         return ()
 
 
+class ONNXExportFP8:
+    def __init__(self) -> None:
+        pass
+
+    RETURN_TYPES = ()
+    FUNCTION = "export"
+    OUTPUT_NODE = True
+    CATEGORY = "TensorRT"
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("MODEL",),
+                "output_folder": (
+                    "STRING",
+                    {"default": os.path.join(folder_paths.models_dir, "onnx")},
+                ),
+            },
+            "optional": {"filename": ("STRING", {"default": "model_fp8.onnx"})},
+        }
+
+    def export(self, model, output_folder, filename):
+        comfy.model_management.unload_all_models()
+        comfy.model_management.load_models_gpu(
+            [model], force_patch_weights=True, force_full_load=True
+        )
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        path = os.path.join(output_folder, filename)
+        export_onnx(model, path, fp8=True)
+        print(f"INFO: Exported Model to: {path}")
+        return ()
+
+
 class ONNXModelSelector:
     @classmethod
     def INPUT_TYPES(s):
@@ -68,10 +104,12 @@ class ONNXModelSelector:
 
 NODE_CLASS_MAPPING = {
     "ONNX_EXPORT": ONNXExport,
+    "ONNX_FP8_EXPORT": ONNXExportFP8,
     "ONNXModelSelector": ONNXModelSelector,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ONNX_EXPORT": "ONNX Export",
+    "ONNX_FP8_EXPORT": "ONNX FP8 Export",
     "ONNXModelSelector": "Select ONNX Model",
 }

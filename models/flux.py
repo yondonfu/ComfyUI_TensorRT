@@ -1,6 +1,8 @@
 import torch
 
 from .baseline import TRTModelUtil
+from .diffusion_pipe import FluxT2IPipe
+from ..quantization import FP8_BF16_FLUX_MMDIT_BMM2_FP8_OUTPUT_CONFIG
 
 
 class FLuxBase(TRTModelUtil):
@@ -75,10 +77,43 @@ class FLuxBase(TRTModelUtil):
             **kwargs,
         )
 
-    def model_attributes(self, **kwargs) -> dict:
-        return {
-            "double_blocks": [None, ] * self.double_blocks,
-        }
+    def get_t2i_pipe(
+            self,
+            model,
+            clip,
+            seed,
+            batch_size=1,
+            width=1024,
+            height=1024,
+            cfg=3.5,
+            sampler_name="euler",
+            scheduler="simple",
+            denoise=1.0,
+            device="cuda",
+            *args,
+            **kwargs,
+    ):
+        return FluxT2IPipe(
+            model,
+            clip,
+            batch_size,
+            width,
+            height,
+            seed,
+            cfg,
+            sampler_name,
+            scheduler,
+            denoise,
+            kwargs.get("max_shift", 1.15),
+            kwargs.get("base_shift", 0.5),
+            device,
+        )
+
+    def get_qconfig(self, precision: str, **kwargs) -> tuple[dict, dict]:
+        if precision == "fp8":
+            return (FP8_BF16_FLUX_MMDIT_BMM2_FP8_OUTPUT_CONFIG, {"quant_level": 4.0})
+        elif precision == "int8":
+            return ({}, {"quant_level": 3.0})
 
 
 class Flux_TRT(FLuxBase):
