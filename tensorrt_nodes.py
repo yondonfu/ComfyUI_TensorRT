@@ -155,9 +155,7 @@ class TRTBuildBase:
             full_output_folder, f"{filename}_{counter:05}_.engine"
         )
 
-        batch_multiplier = (
-            2 if model_helper.is_conditional else 1
-        )  # TODO lets see if we really want this
+        batch_multiplier = 1
         if model_version == "SVD_img2vid":
             batch_multiplier *= num_video_frames
         success = trt_model.build(
