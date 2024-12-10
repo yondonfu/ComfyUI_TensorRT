@@ -336,7 +336,7 @@ class DynamicTRTBuild(TRTBuildBase):
             context_opt,
             context_max,
             num_video_frames,
-            onnx_model_path,
+            onnx_model_path = None,
     ):
         return super()._convert(
             model,
@@ -429,7 +429,7 @@ class StaticTRTBuild(TRTBuildBase):
             width_opt,
             context_opt,
             num_video_frames,
-            onnx_model_path,
+            onnx_model_path = None,
     ):
         return super()._convert(
             model,
