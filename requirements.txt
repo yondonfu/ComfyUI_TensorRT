@@ -4,4 +4,4 @@ onnx-graphsurgeon
 onnxmltools
 onnxconverter-common
 pulp
-nvidia-modelopt[onnx] --extra-index-url https://pypi.nvidia.com
+nvidia-modelopt[all] --extra-index-url https://pypi.nvidia.com
