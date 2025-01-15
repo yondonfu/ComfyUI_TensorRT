@@ -89,4 +89,17 @@ def get_model_from_version(model_version: str, config: dict = {}):
         )
     else:
         model = conf.get_model({})
+    
+    # for hiddenswitch
+    if hasattr(model, 'operations') and model.operations is None:
+        import comfy.ops as ops
+        fp8 = conf.optimizations.get("fp8", conf.scaled_fp8 is not None)
+        model.operations = ops.pick_operations(
+            conf.unet_config.get("dtype", None),
+            conf.manual_cast_dtype,
+            fp8_optimizations=fp8,
+            scaled_fp8=conf.scaled_fp8
+        )
+    
     return model, helper
+
