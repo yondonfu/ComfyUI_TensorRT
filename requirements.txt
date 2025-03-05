@@ -2,6 +2,6 @@ tensorrt>=10.4.0 --extra-index-url https://pypi.nvidia.com
 onnx!=1.16.2
 onnx-graphsurgeon
 onnxmltools
-onnxconverter-common
+onnxconverter-common @ git+https://github.com/microsoft/onnxconverter-common.git@f7a8eb699caa6f6a78d3bdfbcaf5dfbd43569ebd
 pulp
 nvidia-modelopt[all] --extra-index-url https://pypi.nvidia.com
