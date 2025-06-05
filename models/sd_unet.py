@@ -192,6 +192,10 @@ class SD21UnclipL_TRT(UNetTRT):
             **kwargs,
         )
 
+    @classmethod
+    def from_model(cls, model, **kwargs):
+        return super(SD21UnclipL_TRT, cls).from_model(model, use_control=True)
+
 
 class SD21UnclipH_TRT(UNetTRT):
     def __init__(
@@ -213,6 +217,10 @@ class SD21UnclipH_TRT(UNetTRT):
             num_res_blocks,
             **kwargs,
         )
+
+    @classmethod
+    def from_model(cls, model, **kwargs):
+        return super(SD21UnclipH_TRT, cls).from_model(model, use_control=True)
 
 
 class SDXLRefiner_TRT(UNetTRT):
