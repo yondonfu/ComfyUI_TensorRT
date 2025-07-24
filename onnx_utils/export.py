@@ -12,7 +12,8 @@ import torch
 from modelopt.torch.quantization.nn import SequentialQuantizer, TensorQuantizer
 from onnx import numpy_helper
 from onnx.external_data_helper import _get_all_tensors, ExternalDataInfo
-from onnxmltools.utils.float16_converter import convert_float_to_float16
+
+from onnxconverter_common.float16 import convert_float_to_float16
 
 from .fp8_onnx_graphsurgeon import (
     cast_fp8_mha_io,
