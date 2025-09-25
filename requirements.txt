@@ -1,7 +1,8 @@
-tensorrt>=10.4.0 --extra-index-url https://pypi.nvidia.com
+ --extra-index-url https://pypi.nvidia.com
+tensorrt>=10.4.0
 onnx!=1.16.2
 onnx-graphsurgeon
 onnxmltools==1.14.0
 onnxconverter-common==1.15.0
 pulp
-nvidia-modelopt[all] --extra-index-url https://pypi.nvidia.com
+nvidia-modelopt[all]
